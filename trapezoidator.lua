@@ -11,7 +11,7 @@ function isLeft(P0, P1, P2 )
 	return det/math.abs(det)
 end
 
-function wn_PnPoly( P, points )
+function wn_PnPoly( P, points ) --possibly rewrite this
 	local wn = 0
 	for i=1,#points-3,2 do
 		if (points[i+1] <= P[2]) then
@@ -26,51 +26,26 @@ function wn_PnPoly( P, points )
 	end
 	return wn
 end
+
 function evenOddRule(wn)
 	return wn%2==1
 end
 
-function whereIntersect(S1,S2) --might be better to use determinants
-	local x1,y1 = unpack(S1[1])
-	local x2,y2 = unpack(S1[2])
-	local x3,y3 = unpack(S2[1])
-	local x4,y4 = unpack(S2[2])
-	local a = (y2-y1)/(x2-x1)
-	local b = (y4-y3)/(x4-x3)
-	local c = y1 - a * x1;
-	local d = y3 - b * x3;
+function whereIntersect(S1,S2)
+	local px,py = S1[1][1], S1[1][2]
+	local rx,ry = S1[2][1] - px, S1[2][2] - py
+	local qx,qy = S2[1][1], S2[1][2]
+	local sx,sy = S2[2][1] - qx, S2[2][2] - qy
 	
-	if a == -math.huge or a == math.huge or a ~= a then -- a is undefined
-		return {x1, b*x1 + d}
-	end
-	if b == -math.huge or b == math.huge or b ~= b then -- b is undefined
-		return {x3, a*x3 + c}
-	end
-	
-	-- ax + c = bx + d
-	local x = (d - c)/(a-b)
-	local y = a*x+c
-	return {x,y}
+	local t = ((qx-px)*sy-sx*(qy-py)) / (rx*sy-ry*sx)
+	return (0 < t and t < 1),{ px + t*rx, py + t*ry }
 end
 function whereIntersectY(S1,yVal)
-	local x1,y1 = unpack(S1[1])
-	local x2,y2 = unpack(S1[2])
-	local a = (y2-y1)/(x2-x1)
-	local c = y1 - a * x1;
-	
-	if a == -math.huge or a == math.huge or a ~= a then -- a is undefined
-		return x1
-	end
-	-- ax + c = bx + d
-	return (yVal - c)/(a)
-end
-function crosses(seg, seg2)
-	local il1 = isLeft(seg2[1],seg2[2],seg[1])
-	local il2 = isLeft(seg2[1],seg2[2],seg[2])
-	return il1 ~= il2 and il1 ~= 0 and il2 ~= 0
+	local px,py = S1[1][1], S1[1][2]
+	return px - (py-yVal) / (S1[2][2] - py) * (S1[2][1] - px)
 end
 
-function phase0(pointList) --might want to clean this up a little
+function phase0(pointList) --clean this up a little
 	local segments = {}
 	local subSegs = {}
 	for i=1,#pointList-3,2 do
@@ -81,8 +56,8 @@ function phase0(pointList) --might want to clean this up a little
 		subSegs[i][#subSegs[i]+1] = seg[1]
 		for j=i+2,#segments do --was i+1 but if the segments are ordered properly, it shouldn't intersect the one after it
 			local seg2 = segments[j]
-			if crosses(seg2,seg) then
-				local loc = whereIntersect(seg2, seg)
+			local crosses,loc = whereIntersect(seg2, seg)
+			if crosses then
 				subSegs[i][#subSegs[i]+1] = loc
 				subSegs[j][#subSegs[j]+1] = loc
 			end

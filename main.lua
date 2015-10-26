@@ -21,12 +21,10 @@ end
 
 local timeDelta
 local traps
-local phase0o
-local phaseIo
 function love.load()
 	local beforeTime = love.timer.getTime()
 	for i=1,10000 do
-		traps,phase0o,phaseIo = Trapezoidator(points, evenOdd)
+		traps = Trapezoidator(points, evenOdd)
 	end
 	timeDelta = love.timer.getTime() - beforeTime
 end
